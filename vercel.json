@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 120
+    }
+  },
+  "rewrites": [
+    { "source": "/room/:code", "destination": "/index.html" }
+  ]
+}
