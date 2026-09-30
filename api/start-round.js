@@ -1,6 +1,6 @@
 import { ensureSchema, db } from './_lib/db.js';
 import { readJson, json, fail } from './_lib/http.js';
-import { ROUND_SECONDS, pickTarget, id } from './_lib/game.js';
+import { ROUND_SECONDS, randomTarget, id } from './_lib/game.js';
 import { generateImage } from './_lib/openai.js';
 
 export default async function handler(req, res) {
@@ -16,7 +16,8 @@ export default async function handler(req, res) {
     if (Number(playerCount[0]?.n || 0) < 2) return json(res, 409, { error: 'need_more_players' });
     const prev = await sql`SELECT COALESCE(MAX(round_no),0)::int AS n FROM pb_rounds WHERE room_code=${roomCode}`;
     const roundNo = Number(prev[0].n) + 1;
-    const targetPrompt = pickTarget(roundNo);
+    const recent = await sql\`SELECT target_prompt FROM pb_rounds WHERE room_code=\${roomCode} ORDER BY round_no DESC LIMIT 12\`;
+    const targetPrompt = randomTarget(recent.map(x => x.target_prompt));
     const targetImage = await generateImage(targetPrompt);
     const roundId = id('r');
     const deadline = new Date(Date.now() + ROUND_SECONDS * 1000);
